@@ -1,6 +1,6 @@
 TARGET = my_tar
 OBJ = my_tar.c
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -Wall -Wextra -Werror -g3 -fsanitize=address -fno-omit-frame-pointer
 
  all : $(TARGET)
 
