@@ -34,15 +34,25 @@ time : returns time in seconds since Epoch
 utime : change file last access and modification times ?
 ctime : converts time into a format of "Wed Jun 30 21:49:08 1993\n" ?
 */
-
+/* What does tar even do? -
+Combine files together into a .tar file. Functions as a Fixed Archive
+*/
 #include <stdio.h> // TEMPORARY, FOR PRINTF
 
 int my_tar(){
-    printf("hello");
+    printf("my_tar executes...\n");
     return 0;
 }
 
-int main(){
+int main(int argc, char **argv){
+    printf(">%d INPUT(S): {",argc);
+    for (int i = 1 ;i < argc; i++) {
+        printf("%s",argv[i]);
+        if(i != (argc-1)){
+            printf(",");
+        }
+    }
+    printf("}\n");
     my_tar();
     return 0;
 }
