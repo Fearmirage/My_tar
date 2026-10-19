@@ -56,7 +56,49 @@ then, make it readable (seperating it into multiple small functions)
 */
 #include <stdio.h> // TEMPORARY, FOR PRINTF
 
+int my_tar_option_is_supported(char c){
+    return c == 'c' ||c == 'r' ||c == 'u' ||c == 't' ||c == 'x' ||c == 'f';
+}
 
+char* my_tar_get_options(int raw_input_len, char** raw_input){
+    char options[] = "??";
+    int i = 1;
+    while((i <= raw_input_len) && (raw_input[i][0] == '-')){ // Loops through all options
+        char* string = raw_input[i];
+        printf(">Looping through %s...\n",string);
+        // >> Loop through option in case of things like '-cf'
+        int j = 1; // raw_input[i][0] is '-', so we begin at 1
+        while(string[j] != '\0'){
+            char letter = string[j];
+            if(my_tar_option_is_supported(letter)){
+                if(letter == 'f'){
+                    if(options[0] == '?'){
+                        printf("Must specify one of -c, -r, -t, -u, -x\n");
+                        return "XX"; // Error signal
+                    }
+                    options[1] = 'f';
+                    j++;
+                    continue;
+                }
+
+                if(options[0] == '?'){
+                    options[0] = letter;
+                }else{
+                    printf("Can't specify both -%c and -%c\n", letter, options[0]);
+                    return "XX"; // Error signal
+                }
+            }else{
+                printf("Must specify one of -c, -r, -t, -u, -x\n");
+                return "XX"; // Error signal
+            }
+            j++;
+        }
+        i++;
+    }
+
+    char* read_only_options = options;
+    return read_only_options;
+}
 
 int my_tar(int input_len, char** input){
     //printf starting with '>' in the terminal means it's a debug printf
@@ -80,31 +122,11 @@ int my_tar(int input_len, char** input){
         return 1;
     }
     // >> Get all options
-    char options[] = "??";
-    int i = 1;
-    while((i <= input_len) && (input[i][0] == '-')){ // Loops through all options
-        printf(">Looping through %s...\n",input[i]);
-        // >> Loop through option in case of things like '-cf'
-        int j = 1; // input[i][0] is '-', so we begin at 1
-        while(input[i][j] != '\0'){
-            if(input[i][j] == 'c' ||input[i][j] == 'r' ||input[i][j] == 'u' ||input[i][j] == 't' ||input[i][j] == 'x'){
-                if(options[0] == '?'){
-                    options[0] = input[i][j];
-                }else{
-                    printf("Can't specify both -%c and -%c\n", input[i][j], options[0]);
-                    return 1;
-                }
-            }else if(input[i][j] == 'f'){
-                if(options[0] == '?'){
-                    printf("Must specify one of -c, -r, -t, -u, -x\n");
-                    return 1;
-                }
-                options[1] = 'f';
-            }
-            j++;
-        }
-        i++;
+    char* options = my_tar_get_options(input_len, input); // When an error occurs, options = "XX"
+    if(options[0] == 'X'){
+        return 1;
     }
+
     printf(">LOOP END options is -%c and -%c\n",options[0],options[1]);
 
     return 0;
