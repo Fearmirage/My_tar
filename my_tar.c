@@ -37,7 +37,7 @@ ctime : converts time into a format of "Wed Jun 30 21:49:08 1993\n" ?
 /* What does tar even do? -
 Combine files together into a .tar file. These .tar files are called archives
 --OPTIONS - optionss--
-All optionss are mutually exclusive
+All options are mutually exclusive with the exception of -f
 -c creates a new archive containing the specified items. if not with -f prints it out on stdout
 -r is like -c except it appends new entries. needs -f
 -t print out all files compacted in a given archive.
@@ -126,8 +126,9 @@ int my_tar(int input_len, char** input){
     if(options[0] == 'X'){
         return 1;
     }
-
     printf(">LOOP END options is -%c and -%c\n",options[0],options[1]);
+
+    // >>>>
 
     return 0;
 }
