@@ -36,18 +36,18 @@ ctime : converts time into a format of "Wed Jun 30 21:49:08 1993\n" ?
 */
 /* What does tar even do? -
 Combine files together into a .tar file. These .tar files are called archives
---OPTIONS - Modes--
-All modes are mutually exclusive
+--OPTIONS - optionss--
+All optionss are mutually exclusive
 -c creates a new archive containing the specified items. if not with -f prints it out on stdout
 -r is like -c except it appends new entries. needs -f
 -t print out all files compacted in a given archive.
 -u like -r except the new entries are only added if the modification date is superior.
 -x unpack an archive
 -- --
-In -c, -r, or -u mode, each specified file or directory is added to the archive in the order specified on the command line.
+In -c, -r, or -u options, each specified file or directory is added to the archive in the order specified on the command line.
 By default, the contents of each directory are also archived.
 
--f is always after the mode.
+-f is always after the options.
 my_tar will not handle file inside subdirectory.
 */
 /* Method -
@@ -56,12 +56,14 @@ then, make it readable (seperating it into multiple small functions)
 */
 #include <stdio.h> // TEMPORARY, FOR PRINTF
 
+
+
 int my_tar(int input_len, char** input){
     //printf starting with '>' in the terminal means it's a debug printf
     printf(">my_tar executes...\n");
     // Dont forget input includes "./my_tar" in position 0!
 
-    // >>>> Print out the inputs
+    // >>>> Print out the inputs (debugging)
     printf(">%d INPUT(S): {",input_len);
     for (int i = 1 ;i <= input_len; i++) {
         printf("%s",input[i]);
@@ -78,8 +80,7 @@ int my_tar(int input_len, char** input){
         return 1;
     }
     // >> Get all options
-    char mode = 0;
-    int f = 0; // bool
+    char options[] = "??";
     int i = 1;
     while((i <= input_len) && (input[i][0] == '-')){ // Loops through all options
         printf(">Looping through %s...\n",input[i]);
@@ -87,24 +88,24 @@ int my_tar(int input_len, char** input){
         int j = 1; // input[i][0] is '-', so we begin at 1
         while(input[i][j] != '\0'){
             if(input[i][j] == 'c' ||input[i][j] == 'r' ||input[i][j] == 'u' ||input[i][j] == 't' ||input[i][j] == 'x'){
-                if(mode == 0){
-                    mode = input[i][j];
+                if(options[0] == '?'){
+                    options[0] = input[i][j];
                 }else{
-                    printf("Can't specify both -%c and -%c\n", input[i][j], mode);
+                    printf("Can't specify both -%c and -%c\n", input[i][j], options[0]);
                     return 1;
                 }
             }else if(input[i][j] == 'f'){
-                if(mode == 0){
+                if(options[0] == '?'){
                     printf("Must specify one of -c, -r, -t, -u, -x\n");
                     return 1;
                 }
-                f = 1;
+                options[1] = 'f';
             }
             j++;
         }
         i++;
     }
-    printf(">LOOP END mode is -%c with -f being %d\n",mode,f);
+    printf(">LOOP END options is -%c and -%c\n",options[0],options[1]);
 
     return 0;
 }
