@@ -55,18 +55,8 @@ Make one chunk of code that completes an objective (For example, >>>>Get options
 then, make it readable (seperating it into multiple small functions)
 */
 #include <stdio.h> // TEMPORARY, FOR PRINTF (printf is not authorized... :( )
-#include <stdlib.h> // For exit(), technically not authorized...
 
 #include <dirent.h> // for opendir, readdir, closedir
-
-DIR* safe_opendir(char* file_name){
-    DIR* dir = opendir(file_name);
-    if (dir == NULL) {
-        printf ("Cannot open directory '%s'\n", file_name);
-        exit(1);
-    }
-    return dir;
-}
 
 int my_tar_option_is_supported(char c){
     return c == 'c' ||c == 'r' ||c == 'u' ||c == 't' ||c == 'x' ||c == 'f';
@@ -157,6 +147,13 @@ int my_tar(int input_len, char** input){
     }
     printf(">archive_filename = %s; index_paths = %d; first file is %s \n",archive_filename, index_paths, input[index_paths]);
     // All files are from input[index_paths] to input[input_len]
+    char* file = "my_tar.c";
+    DIR* stream = opendir(file);
+    if(stream == NULL){
+        printf("%s: Cannot stat: No such file or directory");
+        return 1; // cannot close a stream that doesn't exist, so, must return.
+    }
+    closedir(stream);
 
     return 0;
 }
