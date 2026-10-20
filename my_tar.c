@@ -147,11 +147,18 @@ int my_tar(int input_len, char** input){
     }
     printf(">archive_filename = %s; index_paths = %d; first file is %s \n",archive_filename, index_paths, input[index_paths]);
     // All files are from input[index_paths] to input[input_len]
-    char* file = "my_tar.c";
-    DIR* stream = opendir(file);
+    // >> wip
+    char* dir_name = "./"; //Should be replaced with wherever the script was executed from
+    DIR* stream = opendir(dir_name);
     if(stream == NULL){
-        printf("my_tar: %s: Cannot stat: No such file or directory");
-        return 1; // cannot close a stream that doesn't exist, so, must return.
+        printf("my_tar: %s: Cannot stat: No such file or directory", dir_name);
+        return 1; // cannot close a stream that doesn't exist, so, must cut the code short
+    }
+    printf(">Directory opened: %s\n",dir_name);
+    while(index_paths <= input_len){
+        //use stream here
+
+        index_paths++;
     }
     closedir(stream);
 
