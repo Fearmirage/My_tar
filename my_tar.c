@@ -54,7 +54,7 @@ my_tar will not handle file inside subdirectory.
 Make one chunk of code that completes an objective (For example, >>>>Get options from input), make sure it works,
 then, make it readable (seperating it into multiple small functions)
 */
-#include <stdio.h> // TEMPORARY, FOR PRINTF (printf is not authorized... :( )
+#include <stdio.h> // TEMPORARY, FOR PRINTF (printf is not authorized... :( ), will have to be replaced with write()
 
 #include <dirent.h> // for opendir, readdir, closedir
 
@@ -75,7 +75,7 @@ char* my_tar_get_options(int raw_input_len, char** raw_input){
             if(my_tar_option_is_supported(letter)){
                 if(letter == 'f'){
                     if(options[0] == '?'){
-                        printf("Must specify one of -c, -r, -t, -u, -x\n");
+                        printf("my_tar: Must specify one of -c, -r, -t, -u, -x\n");
                         return "XX"; // Error signal
                     }
                     options[1] = 'f';
@@ -86,11 +86,11 @@ char* my_tar_get_options(int raw_input_len, char** raw_input){
                 if(options[0] == '?'){
                     options[0] = letter;
                 }else{
-                    printf("Can't specify both -%c and -%c\n", letter, options[0]);
+                    printf("my_tar: Can't specify both -%c and -%c\n", letter, options[0]);
                     return "XX"; // Error signal
                 }
             }else{
-                printf("Must specify one of -c, -r, -t, -u, -x\n");
+                printf("my_tar: Must specify one of -c, -r, -t, -u, -x\n");
                 return "XX"; // Error signal
             }
             j++;
@@ -120,7 +120,7 @@ int my_tar(int input_len, char** input){
     // >>>> Get options from input
     // >> There needs to be options in the first place:
     if(input_len <= 0){
-        printf("Must specify one of -c, -r, -t, -u, -x\n");
+        printf("my_tar: Must specify one of -c, -r, -t, -u, -x\n");
         return 1;
     }
     // >> Get all options
@@ -128,7 +128,7 @@ int my_tar(int input_len, char** input){
     if(options[0] == 'X'){
         return 1;
     }else if(options[0] == '?'){
-        printf("Must specify one of -c, -r, -t, -u, -x\n"); // Inaccurate message compared to tar.
+        printf("my_tar: Must specify one of -c, -r, -t, -u, -x\n"); // Inaccurate message compared to tar.
         return 1;
     }
     printf(">LOOP END options is -%c and -%c\n",options[0],options[1]);
@@ -150,7 +150,7 @@ int my_tar(int input_len, char** input){
     char* file = "my_tar.c";
     DIR* stream = opendir(file);
     if(stream == NULL){
-        printf("%s: Cannot stat: No such file or directory");
+        printf("my_tar: %s: Cannot stat: No such file or directory");
         return 1; // cannot close a stream that doesn't exist, so, must return.
     }
     closedir(stream);
