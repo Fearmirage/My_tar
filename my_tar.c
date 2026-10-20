@@ -54,7 +54,19 @@ my_tar will not handle file inside subdirectory.
 Make one chunk of code that completes an objective (For example, >>>>Get options from input), make sure it works,
 then, make it readable (seperating it into multiple small functions)
 */
-#include <stdio.h> // TEMPORARY, FOR PRINTF
+#include <stdio.h> // TEMPORARY, FOR PRINTF (printf is not authorized... :( )
+#include <stdlib.h> // For exit(), technically not authorized...
+
+#include <dirent.h> // for opendir, readdir, closedir
+
+DIR* safe_opendir(char* file_name){
+    DIR* dir = opendir(file_name);
+    if (dir == NULL) {
+        printf ("Cannot open directory '%s'\n", file_name);
+        exit(1);
+    }
+    return dir;
+}
 
 int my_tar_option_is_supported(char c){
     return c == 'c' ||c == 'r' ||c == 'u' ||c == 't' ||c == 'x' ||c == 'f';
@@ -125,10 +137,26 @@ int my_tar(int input_len, char** input){
     char* options = my_tar_get_options(input_len, input); // When an error occurs, options = "XX"
     if(options[0] == 'X'){
         return 1;
+    }else if(options[0] == '?'){
+        printf("Must specify one of -c, -r, -t, -u, -x\n"); // Inaccurate message compared to tar.
+        return 1;
     }
     printf(">LOOP END options is -%c and -%c\n",options[0],options[1]);
 
-    // >>>>
+    // >>>> -c
+    // >> Get all file paths
+    // > Get index where files start
+    int index_paths = 2; // input[1] must be an option, so start at 2
+    char* archive_filename = "";
+    while(*input[index_paths] == '-' && index_paths <= input_len){
+        index_paths++;
+    }
+    if(options[1] == 'f'){
+        archive_filename = input[index_paths];
+        index_paths++;
+    }
+    printf(">archive_filename = %s; index_paths = %d; first file is %s \n",archive_filename, index_paths, input[index_paths]);
+    // All files are from input[index_paths] to input[input_len]
 
     return 0;
 }
