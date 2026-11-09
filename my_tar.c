@@ -57,6 +57,37 @@ then, make it readable (seperating it into multiple small functions)
 #include <stdio.h> // TEMPORARY, FOR PRINTF (printf is not authorized... :( ), will have to be replaced with write()
 
 #include <dirent.h> // for opendir, readdir, closedir
+#include <fcntl.h> // for open, and others...
+#include <stdlib.h> // for malloc, free
+
+int my_strlen(char* string){
+    char* pointer = string;
+    while(*pointer != 0){
+        pointer++;
+    }
+    return pointer-string;
+}
+
+char* my_concat(char* string1, char* string2){
+    int concat_len = my_strlen(string1) + my_strlen(string2) + 1;
+    char* concatenated = malloc(concat_len*sizeof(char));
+    char* pointer_concat = concatenated;
+    char* pointer_str1 = string1;
+    char* pointer_str2 = string2;
+    int i = 0;
+    while ( i < concat_len){
+        if(*pointer_str1 != 0){
+            *pointer_concat = *pointer_str1;
+            pointer_str1++;
+        }else{
+            *pointer_concat = *pointer_str2;
+            pointer_str2++;
+        }
+        pointer_concat++;
+        i++;
+    }
+    return concatenated;
+}
 
 int my_tar_option_is_supported(char c){
     return c == 'c' ||c == 'r' ||c == 'u' ||c == 't' ||c == 'x' ||c == 'f';
@@ -107,7 +138,7 @@ int my_tar(int input_len, char** input){
     printf(">my_tar executes...\n");
     // Dont forget input includes "./my_tar" in position 0!
 
-    // >>>> Print out the inputs (debugging)
+// >>>> Print out the inputs (debugging)
     printf(">%d INPUT(S): {",input_len);
     for (int i = 1 ;i <= input_len; i++) {
         printf("%s",input[i]);
@@ -117,13 +148,13 @@ int my_tar(int input_len, char** input){
     }
     printf("}\n");
 
-    // >>>> Get options from input
-    // >> There needs to be options in the first place:
+// >>>> Get options from input
+// >> There needs to be options in the first place:
     if(input_len <= 0){
         printf("my_tar: Must specify one of -c, -r, -t, -u, -x\n");
         return 1;
     }
-    // >> Get all options
+// >> Get all options
     char* options = my_tar_get_options(input_len, input); // When an error occurs, options = "XX"
     if(options[0] == 'X'){
         return 1;
@@ -133,9 +164,9 @@ int my_tar(int input_len, char** input){
     }
     printf(">LOOP END options is -%c and -%c\n",options[0],options[1]);
 
-    // >>>> -c
-    // >> Get all file paths
-    // > Get index where files start
+// >>>> archiving operations
+// >> Get all file paths
+// > Get index where files start
     int index_paths = 2; // input[1] must be an option, so start at 2
     char* archive_filename = "";
     while(*input[index_paths] == '-' && index_paths <= input_len){
@@ -147,25 +178,32 @@ int my_tar(int input_len, char** input){
     }
     printf(">archive_filename = %s; index_paths = %d; first file is %s \n",archive_filename, index_paths, input[index_paths]);
     // All files are from input[index_paths] to input[input_len]
-    // >> wip
-    char* dir_name = "./"; //Should be replaced with wherever the script was executed from
+// >> -c
+    char* dir_name = "./";
     DIR* stream = opendir(dir_name);
     if(stream == NULL){
         printf("my_tar: %s: Cannot stat: No such file or directory", dir_name);
         return 1; // cannot close a stream that doesn't exist, so, must cut the code short
     }
     printf(">Directory opened: %s\n",dir_name);
+
     while(index_paths <= input_len){
         //use stream here
+        char* filename = input[index_paths];
+        char* filepath = my_concat(dir_name,filename);
+        open(filepath,O_RDONLY);
+        printf(">file opened: %s\n",filepath);
 
         index_paths++;
     }
+
+
     closedir(stream);
 
     return 0;
 }
 
-int main(int argc, char **argv){
+int main(int argc, char** argv){
 
     my_tar(argc-1,argv);
 
