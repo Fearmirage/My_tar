@@ -56,8 +56,10 @@ then, make it readable (seperating it into multiple small functions)
 */
 #include <stdio.h> // TEMPORARY, FOR PRINTF (printf is not authorized... :( ), will have to be replaced with write()
 
+#include <sys/stat.h> // for stat
 #include <dirent.h> // for opendir, readdir, closedir
 #include <fcntl.h> // for open, and others...
+#include <unistd.h> // for read, ...
 #include <stdlib.h> // for malloc, free
 
 int my_strlen(char* string){
@@ -168,15 +170,15 @@ int my_tar(int input_len, char** input){
 // >> Get all file paths
 // > Get index where files start
     int index_paths = 2; // input[1] must be an option, so start at 2
-    char* archive_filename = "";
+    char* archive_file_name = "";
     while(*input[index_paths] == '-' && index_paths <= input_len){
         index_paths++;
     }
     if(options[1] == 'f'){
-        archive_filename = input[index_paths];
+        archive_file_name = input[index_paths];
         index_paths++;
     }
-    printf(">archive_filename = %s; index_paths = %d; first file is %s \n",archive_filename, index_paths, input[index_paths]);
+    printf(">archive_file_name = %s; index_paths = %d; first file is %s \n",archive_file_name, index_paths, input[index_paths]);
     // All files are from input[index_paths] to input[input_len]
 // >> -c
     char* dir_name = "./";
@@ -188,15 +190,30 @@ int my_tar(int input_len, char** input){
     printf(">Directory opened: %s\n",dir_name);
 
     while(index_paths <= input_len){
-        //use stream here
-        char* filename = input[index_paths];
-        char* filepath = my_concat(dir_name,filename);
-        open(filepath,O_RDONLY);
-        printf(">file opened: %s\n",filepath);
+        //open file
+        char* file_name = input[index_paths];
+        char* file_path = my_concat(dir_name,file_name);
+        int file_descriptor = open(file_path,O_RDONLY);
+        printf(">file opened: %s\n",file_path);
+
+        // get file information
+        struct stat file_info;
+        stat(file_path,&file_info);
+        int file_size = file_info.st_size;
+        printf(">size = %d\n",file_size);
+
+        // read file
+        char buf[file_size];
+        size_t nbytes = sizeof(buf);
+        read(file_descriptor,buf,nbytes);
+        printf(">file_contents = \n");
+        for(int i = 0; i < file_size; i++){
+            printf("%c",buf[i]);
+        }
+        printf("\n");
 
         index_paths++;
     }
-
 
     closedir(stream);
 
