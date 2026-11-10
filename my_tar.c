@@ -249,28 +249,28 @@ int my_tar(int input_len, char** input){
     printf(">Directory opened: %s\n",dir_name);
 
     while(index_paths <= input_len){
-        // open file
+        // > open file
         char* file_name = input[index_paths];
         char* file_path = my_concat(dir_name,file_name);
         int file_descriptor = open(file_path,O_RDONLY);
         printf(">file opened: %s\n",file_path);
 
-        // get file information
+        // > get file information
         struct stat file_info;
         stat(file_path,&file_info);
         int file_size = file_info.st_size;
         printf(">size = %d\n",file_size);
 
-        // get attributes
+        // > get attributes
         char* list = get_listxattr(file_path);
         printf(">list = %s\n",list);
         getallxattr(file_path,list,my_strlen(list));
         free(list);
 
-        // read file
-        char buf[file_size];
-        size_t nbytes = sizeof(buf);
-        read(file_descriptor,buf,nbytes);
+        // > read file
+        char file_contents_buffer[file_size];
+        size_t nbytes = sizeof(file_contents_buffer);
+        read(file_descriptor,file_contents_buffer,nbytes);
         // printf(">file_contents = \n");
         // for(int i = 0; i < file_size; i++){
         //     printf("%c",buf[i]);
