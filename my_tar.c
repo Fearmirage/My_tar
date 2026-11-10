@@ -159,33 +159,23 @@ int getallxattr(char* path, char* key, ssize_t list_len){
     ssize_t vallen, keylen;
     char* val;
     while (list_len > 0) {
-        /*
-        * Output attribute key.
-        */
+        //Output attribute key.
         printf(">%s: ", key);
 
-        /*
-        * Determine length of the value.
-        */
+        //Determine length of the value.
         vallen = getxattr(path, key, NULL, 0, 0, 0);
-        printf("()>vallen1 = %zd)\n",vallen);
+        printf("(>vallen1 = %zd)\n",vallen);
         if (vallen > 0) {
 
-            /*
-            * Allocate value buffer.
-            * One extra byte is needed to append 0x00.
-            */
+            //Allocate value buffer.
+            //One extra byte is needed to append 0x00.
             val = malloc(vallen + 1);
 
-            /*
-            * Copy value to buffer.
-            */
+            //Copy value to buffer.
             vallen = getxattr(path, key, val, vallen, 0, 0);
-            printf("()>vallen2 = %zd)\n",vallen);
+            printf("(>vallen2 = %zd)\n",vallen);
             if (vallen != -1) {
-                /*
-                * Output attribute value.
-                */
+                //Output attribute value.
                 val[vallen] = 0;
                 printf("%s", val);
             }
@@ -196,10 +186,7 @@ int getallxattr(char* path, char* key, ssize_t list_len){
         }
 
         printf("\n");
-
-        /*
-        * Forward to next attribute key.
-        */
+        //forward next key
         keylen = my_strlen(key) + 1;
         list_len -= keylen;
         key += keylen;
