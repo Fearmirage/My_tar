@@ -57,39 +57,11 @@ then, make it readable (seperating it into multiple small functions)
 #include <stdio.h> // TEMPORARY, FOR PRINTF (printf is not authorized... :( ), will have to be replaced with write()
 
 #include <sys/stat.h> // for stat
+#include <sys/xattr.h> // for listxattr, getxattr
 #include <dirent.h> // for opendir, readdir, closedir
 #include <fcntl.h> // for open, and others...
 #include <unistd.h> // for read, ...
 #include <stdlib.h> // for malloc, free
-
-int my_strlen(char* string){
-    char* pointer = string;
-    while(*pointer != 0){
-        pointer++;
-    }
-    return pointer-string;
-}
-
-char* my_concat(char* string1, char* string2){
-    int concat_len = my_strlen(string1) + my_strlen(string2) + 1;
-    char* concatenated = malloc(concat_len*sizeof(char));
-    char* pointer_concat = concatenated;
-    char* pointer_str1 = string1;
-    char* pointer_str2 = string2;
-    int i = 0;
-    while ( i < concat_len){
-        if(*pointer_str1 != 0){
-            *pointer_concat = *pointer_str1;
-            pointer_str1++;
-        }else{
-            *pointer_concat = *pointer_str2;
-            pointer_str2++;
-        }
-        pointer_concat++;
-        i++;
-    }
-    return concatenated;
-}
 
 int my_tar_option_is_supported(char c){
     return c == 'c' ||c == 'r' ||c == 'u' ||c == 't' ||c == 'x' ||c == 'f';
@@ -133,6 +105,106 @@ char* my_tar_get_options(int raw_input_len, char** raw_input){
 
     char* read_only_options = options;
     return read_only_options;
+}
+
+int my_strlen(char* string){
+    char* pointer = string;
+    while(*pointer != 0){
+        pointer++;
+    }
+    return pointer-string;
+}
+
+char* my_concat(char* string1, char* string2){
+    int concat_len = my_strlen(string1) + my_strlen(string2) + 1;
+    char* concatenated = malloc(concat_len*sizeof(char));
+    char* pointer_concat = concatenated;
+    char* pointer_str1 = string1;
+    char* pointer_str2 = string2;
+    int i = 0;
+    while ( i < concat_len){
+        if(*pointer_str1 != 0){
+            *pointer_concat = *pointer_str1;
+            pointer_str1++;
+        }else{
+            *pointer_concat = *pointer_str2;
+            pointer_str2++;
+        }
+        pointer_concat++;
+        i++;
+    }
+    return concatenated;
+}
+
+char* get_listxattr(char* path){
+    //get buffer length
+    ssize_t buffer_len = listxattr(path, NULL, 0, 0);
+    if (buffer_len == -1) {
+        printf(">>>ERROR1 in get_listxattr");
+    }
+    if (buffer_len == 0) {
+        printf(">%s has no attributes.\n", path);
+        return "";
+    }
+    //get the list of extended attributes
+    char* buffer = malloc(buffer_len);
+    buffer_len = listxattr(path, buffer, buffer_len,0);
+    if (buffer_len == -1) {
+        printf(">>>ERROR2 in get_listxattr");
+    }
+    return buffer;
+}
+
+int getallxattr(char* path, char* key, ssize_t list_len){
+    ssize_t vallen, keylen;
+    char* val;
+    while (list_len > 0) {
+        /*
+        * Output attribute key.
+        */
+        printf(">%s: ", key);
+
+        /*
+        * Determine length of the value.
+        */
+        vallen = getxattr(path, key, NULL, 0, 0, 0);
+        printf("()>vallen1 = %zd)\n",vallen);
+        if (vallen > 0) {
+
+            /*
+            * Allocate value buffer.
+            * One extra byte is needed to append 0x00.
+            */
+            val = malloc(vallen + 1);
+
+            /*
+            * Copy value to buffer.
+            */
+            vallen = getxattr(path, key, val, vallen, 0, 0);
+            printf("()>vallen2 = %zd)\n",vallen);
+            if (vallen != -1) {
+                /*
+                * Output attribute value.
+                */
+                val[vallen] = 0;
+                printf("%s", val);
+            }
+
+            free(val);
+        } else if (vallen == 0) {
+            printf("<no value>");
+        }
+
+        printf("\n");
+
+        /*
+        * Forward to next attribute key.
+        */
+        keylen = my_strlen(key) + 1;
+        list_len -= keylen;
+        key += keylen;
+    }
+    return 0;
 }
 
 int my_tar(int input_len, char** input){
@@ -190,7 +262,7 @@ int my_tar(int input_len, char** input){
     printf(">Directory opened: %s\n",dir_name);
 
     while(index_paths <= input_len){
-        //open file
+        // open file
         char* file_name = input[index_paths];
         char* file_path = my_concat(dir_name,file_name);
         int file_descriptor = open(file_path,O_RDONLY);
@@ -202,15 +274,21 @@ int my_tar(int input_len, char** input){
         int file_size = file_info.st_size;
         printf(">size = %d\n",file_size);
 
+        // get attributes
+        char* list = get_listxattr(file_path);
+        printf(">list = %s\n",list);
+        getallxattr(file_path,list,my_strlen(list));
+        free(list);
+
         // read file
         char buf[file_size];
         size_t nbytes = sizeof(buf);
         read(file_descriptor,buf,nbytes);
-        printf(">file_contents = \n");
-        for(int i = 0; i < file_size; i++){
-            printf("%c",buf[i]);
-        }
-        printf("\n");
+        // printf(">file_contents = \n");
+        // for(int i = 0; i < file_size; i++){
+        //     printf("%c",buf[i]);
+        // }
+        // printf("\n");
 
         index_paths++;
     }
