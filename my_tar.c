@@ -63,6 +63,20 @@ then, make it readable (seperating it into multiple small functions)
 #include <unistd.h> // for read, ...
 #include <stdlib.h> // for malloc, free
 
+// < Debug functions
+void printf_all_inputs(int len,char** arr){
+    printf(">%d INPUT(S): {",len);
+    for (int i = 1 ;i <= len; i++) {
+        printf("%s",arr[i]);
+        if(i != len){
+            printf(",");
+        }
+    }
+    printf("}\n");
+    return;
+}
+
+// < Options related
 int my_tar_option_is_supported(char c){
     return c == 'c' ||c == 'r' ||c == 'u' ||c == 't' ||c == 'x' ||c == 'f';
 }
@@ -107,6 +121,7 @@ char* my_tar_get_options(int raw_input_len, char** raw_input){
     return read_only_options;
 }
 
+// <
 int my_strlen(char* string){
     char* pointer = string;
     while(*pointer != 0){
@@ -197,17 +212,7 @@ int getallxattr(char* path, char* key, ssize_t list_len){
 int my_tar(int input_len, char** input){
     //printf starting with '>' in the terminal means it's a debug printf
     printf(">my_tar executes...\n");
-    // Dont forget input includes "./my_tar" in position 0!
-
-// >>>> Print out the inputs (debugging)
-    printf(">%d INPUT(S): {",input_len);
-    for (int i = 1 ;i <= input_len; i++) {
-        printf("%s",input[i]);
-        if(i != input_len){
-            printf(",");
-        }
-    }
-    printf("}\n");
+    printf_all_inputs(input_len,input);
 
 // >>>> Get options from input
 // >> There needs to be options in the first place:
@@ -247,6 +252,9 @@ int my_tar(int input_len, char** input){
         return 1; // cannot close a stream that doesn't exist, so, must cut the code short
     }
     printf(">Directory opened: %s\n",dir_name);
+    //check files exist here
+    closedir(stream);
+
 
     while(index_paths <= input_len){
         // > open file
@@ -260,27 +268,52 @@ int my_tar(int input_len, char** input){
         stat(file_path,&file_info);
         int file_size = file_info.st_size;
         printf(">size = %d\n",file_size);
+        int file_thing = file_info.st_dev;
+        printf(">file_thing = %d\n",file_thing);
 
         // > get attributes
         char* list = get_listxattr(file_path);
         printf(">list = %s\n",list);
         getallxattr(file_path,list,my_strlen(list));
+
+        // > group informations into header
+        //UStar tar header format following https://en.wikipedia.org/wiki/Tar_(computing))
+        /*
+        Field offset	Field size	Field
+        0	            100	        File path and name
+        100	            8	        File mode (octal)
+        108	            8	        Owner's numeric user ID (octal)
+        116	            8	        Group's numeric user ID (octal)
+        124	            12	        File size in bytes (octal)
+        136	            12	        Last modification time in numeric Unix time format (octal)
+        148	            8	        Checksum for header record
+        156	            1	        Type flag
+        157	            100	        (Same field as in the old format)
+        257	            6	        UStar indicator, "ustar", then NUL
+        263	            2	        UStar version, "00"
+        265	            32	        Owner user name
+        297	            32	        Owner group name
+        329	            8	        Device major number
+        337	            8	        Device minor number
+        345	            155	        Filename prefix
+        */
+        char* my_tar_file_header = malloc(400);
         free(list);
 
         // > read file
         char file_contents_buffer[file_size];
         size_t nbytes = sizeof(file_contents_buffer);
         read(file_descriptor,file_contents_buffer,nbytes);
-        // printf(">file_contents = \n");
-        // for(int i = 0; i < file_size; i++){
-        //     printf("%c",buf[i]);
-        // }
-        // printf("\n");
+        printf(">file_contents = \n");
+        for(int i = 0; i < file_size; i++){
+            printf("%c",file_contents_buffer[i]);
+        }
+        printf("\n");
+
+        free(my_tar_file_header);
 
         index_paths++;
     }
-
-    closedir(stream);
 
     return 0;
 }
